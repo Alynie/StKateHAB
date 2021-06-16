@@ -9,7 +9,7 @@ char filename[] = "LOGGER00.csv";
 const int chipSelect = 10; // specific to Adafruit datashield
 
 //begin Geiger initialize variables
-int geigerPins[4] = [ 4, 5, 6, 7 ];
+int geigerPins[4] = {4, 5, 6, 7};
 long unsigned int timer = 0;
 long unsigned int Logtime = 5000; // Logging time in milliseconds
 long unsigned int LocalTime = 0;
@@ -73,7 +73,7 @@ void loop()
   psi2 = readPSI(pressurePin2);
 
   datalog = SD.open(filename, FILE_WRITE); //starts writing on the SD Card
-  datalogRTC();
+  datalogRTC(now);
   datalog.print(", ");
   datalogGeigers();
   datalog.print(", ");
@@ -85,7 +85,7 @@ void loop()
   delay(100);
 
   //This is stuff printed on the Serial Monitor
-  serialRTC();
+  serialRTC(now);
   Serial.print(", ");
   serialGeigers();
   Serial.print(", ");
@@ -105,13 +105,14 @@ void setupRTC()
   if (!rtc.begin())
   {
     Serial.println("Couldn't find RTC");
-    while (1);
+    while (1)
+      ;
   }
 }
 
 void setRTCAuto()
 {
-  if (!rtc.begin())
+  if (!rtc.initialized())
   {
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
@@ -119,7 +120,7 @@ void setRTCAuto()
 
 void setRTCManual(DateTime date)
 {
-  if (!rtc.begin())
+  if (!rtc.initialized())
   {
     rtc.adjust(date);
   }

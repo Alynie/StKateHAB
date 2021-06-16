@@ -24,7 +24,6 @@ boolean usingInterrupt = false;
 void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
 
 //begin Geiger initialize variables
-long unsigned int timer = 0;
 long unsigned int Logtime = 5000; // Logging time in milliseconds
 long unsigned int LocalTime = 0;
 long unsigned int LoopLog = 150;
@@ -48,7 +47,7 @@ void setup()
 
   setupGPS();
 
-  setupSD("Date, Time, GPS Time,  Lat,  Lon,  GPS Altitude, # Satelites, Counter")
+  setupSD("Date, Time, GPS Time,  Lat,  Lon,  GPS Altitude, # Satelites, Counter");
 }
 
 void loop()
@@ -90,7 +89,7 @@ void loop()
 
     //SD Card
     datalog = SD.open(filename, FILE_WRITE); //starts writing on the SD Card
-    datalogRTC();
+    datalogRTC(now);
     datalog.print(", ");
     datalogGPS();
     datalog.print(",");
@@ -100,7 +99,7 @@ void loop()
     delay(100);
 
     //This is stuff printed on the Serial Monitor
-    serialRTC();
+    serialRTC(now);
     Serial.print(",   ");
     serialGPS();
     Serial.print(",   ");
@@ -119,13 +118,14 @@ void setupRTC()
   if (!rtc.begin())
   {
     Serial.println("Couldn't find RTC");
-    while (1);
+    while (1)
+      ;
   }
 }
 
 void setRTCAuto()
 {
-  if (!rtc.begin())
+  if (!rtc.initialized())
   {
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
@@ -133,7 +133,7 @@ void setRTCAuto()
 
 void setRTCManual(DateTime date)
 {
-  if (!rtc.begin())
+  if (!rtc.initialized())
   {
     rtc.adjust(date);
   }

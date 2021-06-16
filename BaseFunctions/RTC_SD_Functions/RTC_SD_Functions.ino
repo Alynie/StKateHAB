@@ -55,13 +55,14 @@ void setupRTC()
     if (!rtc.begin())
     {
         Serial.println("Couldn't find RTC");
-        while (1);
+        while (1)
+            ;
     }
 }
 
 void setRTCAuto()
 {
-    if (!rtc.begin())
+    if (!rtc.initialized())
     {
         rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
     }
@@ -69,7 +70,7 @@ void setRTCAuto()
 
 void setRTCManual(DateTime date)
 {
-    if (!rtc.begin())
+    if (!rtc.initialized())
     {
         rtc.adjust(date);
     }

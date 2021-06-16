@@ -1,7 +1,7 @@
 #include <Wire.h> //This is for the RTC
 
 //begin Geiger initialize variables
-int geigerPins[4] = [ 4, 5, 6, 7 ];
+int geigerPins[4] = {4, 5, 6, 7};
 long unsigned int timer = 0;
 long unsigned int Logtime = 5000; // Logging time in milliseconds
 long unsigned int LocalTime = 0;

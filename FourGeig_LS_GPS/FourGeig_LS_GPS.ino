@@ -56,16 +56,15 @@ void setup()
   //setRTCManual(DateTime(2014, 1, 21, 3, 0, 0))
 
   setupGPS();
+  setupLS();
 
   setupSD("Date, Time, GPS Time,  Lat,  Lon,  GPS Altitude, # Satelites, Temp(C)"); //set file header here
-
-  setupLS(); //set resolution of temp sensors here
 }
 
 void loop()
 {
   DateTime now = rtc.now();
-  checkLS(temp);
+  checkLS();
   parseGPS();
 
   if (timer > millis())
@@ -83,7 +82,6 @@ void loop()
     datalogGPS();
     datalog.print(", ");
     datalogLS();
-
     datalog.println();
     datalog.close();
     delay(100);
@@ -186,13 +184,14 @@ void setupRTC()
   if (!rtc.begin())
   {
     Serial.println("Couldn't find RTC");
-    while (1);
+    while (1)
+      ;
   }
 }
 
 void setRTCAuto()
 {
-  if (!rtc.begin())
+  if (!rtc.initialized())
   {
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
@@ -200,7 +199,7 @@ void setRTCAuto()
 
 void setRTCManual(DateTime date)
 {
-  if (!rtc.begin())
+  if (!rtc.initialized())
   {
     rtc.adjust(date);
   }
