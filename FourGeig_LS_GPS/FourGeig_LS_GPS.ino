@@ -1,7 +1,7 @@
 //Libraries
 #include <RTClib.h>
 #include <Wire.h> //This is for the RTC
-#include <SD.h> // This is a special library for use with older SD board and mega, for breakout SDs
+#include <SD.h>   // This is a special library for use with older SD board and mega, for breakout SDs
 #include <SPI.h>
 #include <Adafruit_GPS.h>
 #include <SoftwareSerial.h>
@@ -14,16 +14,15 @@ float tempC;
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
 
-// Pass our oneWire reference to Dallas Temperature. 
+// Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
 
 // arrays to hold device address
 DeviceAddress temp;
 
 int tempcontrolpin = 24; //the pin that connected to the transistor base
-float hightempset = 13; //heater off temperature
-float lowtempset = 10; //heater on temperature
-
+float hightempset = 13;  //heater off temperature
+float lowtempset = 10;   //heater on temperature
 
 //RTC
 //For the older Adafruit dataloggers, use DS1307 RTC
@@ -46,15 +45,16 @@ long unsigned int LocalTime = 0;
 long unsigned int LoopLog = 150;
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences.
-#define GPSECHO  false
+#define GPSECHO false
 // this keeps track of whether we're using the interrupt
 // off by default!
 boolean usingInterrupt = false;
 void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
 
-void setup(void) {
-  pinMode(tempcontrolpin, OUTPUT);  //heater
-  
+void setup(void)
+{
+  pinMode(tempcontrolpin, OUTPUT); //heater
+
   //GPS
   //Connect at 115200 so we can read the GPS fast enough and echo without dropping chars
   Serial.begin(115200);
@@ -62,15 +62,17 @@ void setup(void) {
   rtc.begin();
 
   //RTC
-  if (!rtc.begin()) {
+  if (!rtc.begin())
+  {
     Serial.println("Couldn't find RTC");
     while (1);
   }
 
-  if (!rtc.begin()) {
+  if (!rtc.initialized())
+  {
     Serial.println("RTC is NOT running!");
     // following line sets the RTC to the date & time this sketch was compiled
-   //rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //UNCOMMENT THIS LINE TO SET TIME TO MATCH COMPUTER
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //UNCOMMENT THIS LINE TO SET TIME TO MATCH COMPUTER
     // This line sets the RTC with an explicit date & time, for example to set
     // January 21, 2014 at 3am you would call:
     // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
@@ -86,7 +88,7 @@ void setup(void) {
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
   // Set the update rate
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
+  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); // 1 Hz update rate
 
   // the nice thing about this code is you can have a timer0 interrupt go off
   // every 1 millisecond, and read data from the GPS for you. that makes the
@@ -112,7 +114,7 @@ void setup(void) {
   {
     filename[6] = i / 10 + '0';
     filename[7] = i % 10 + '0';
-    if (! SD.exists(filename))
+    if (!SD.exists(filename))
     {
       // only open a new file if it doesn't exist
       datalog = SD.open(filename, FILE_WRITE);
@@ -129,9 +131,9 @@ void setup(void) {
     delay(1000);
     return;
   }
-  
+
   // Print Header
-  String Header =  "Date, Time, GPS Time,  Lat,  Lon,  GPS Altitude, # Satelites, Temp(C)";
+  String Header = "Date, Time, GPS Time,  Lat,  Lon,  GPS Altitude, # Satelites, Temp(C)";
 
   datalog = SD.open(filename, FILE_WRITE);
   datalog.println(Header);
@@ -148,42 +150,49 @@ void setup(void) {
   Serial.println(" devices.");
 
   oneWire.reset_search();
-  if (!oneWire.search(temp)) Serial.println("Unable to find address for Device"); 
+  if (!oneWire.search(temp))
+    Serial.println("Unable to find address for Device");
 
   // set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
   sensors.setResolution(temp, 12);
 
- // if (!sensors.getAddress(temp, 0)) Serial.println("Unable to find address for Device 0"); 
+  // if (!sensors.getAddress(temp, 0)) Serial.println("Unable to find address for Device 0");
   Serial.print("Device 1 Address: ");
   printAddress(temp);
   Serial.println();
- 
+
   Serial.print("Device 1 Resolution: ");
-  Serial.print(sensors.getResolution(temp), DEC); 
+  Serial.print(sensors.getResolution(temp), DEC);
   Serial.println();
 }
 
 //outside of void setup
 // Interrupt is called once a millisecond, looks for any new GPS data, and stores it
-SIGNAL(TIMER0_COMPA_vect) {
+SIGNAL(TIMER0_COMPA_vect)
+{
   char c = GPS.read();
   // if you want to debug, this is a good time to do it!
 #ifdef UDR0
   if (GPSECHO)
-    if (c) UDR0 = c;
-  // writing direct to UDR0 is much much faster than Serial.print
-  // but only one character can be written at a time.
+    if (c)
+      UDR0 = c;
+      // writing direct to UDR0 is much much faster than Serial.print
+      // but only one character can be written at a time.
 #endif
 }
 
-void useInterrupt(boolean v) {
-  if (v) {
+void useInterrupt(boolean v)
+{
+  if (v)
+  {
     // Timer0 is already used for millis() - we'll just interrupt somewhere
     // in the middle and call the "Compare A" function above
     OCR0A = 0xAF;
     TIMSK0 |= _BV(OCIE0A);
     usingInterrupt = true;
-  } else {
+  }
+  else
+  {
     // do not call the interrupt function COMPA anymore
     TIMSK0 &= ~_BV(OCIE0A);
     usingInterrupt = false;
@@ -206,13 +215,13 @@ void printTemperature(DeviceAddress deviceAddress)
   //Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
 }
 
-
-void loop() {
-// call sensors.requestTemperatures() to issue a global temperature 
+void loop()
+{
+  // call sensors.requestTemperatures() to issue a global temperature
   // request to all devices on the bus
   sensors.requestTemperatures(); // Send the command to get temperatures
-  tempC=sensors.getTempC(temp);
-  
+  tempC = sensors.getTempC(temp);
+
   // It responds almost immediately. Let's print out the data
   //printTemperature(temp); // Use a simple function to print out the data
 
@@ -222,43 +231,50 @@ void loop() {
   delay(100);
 
   //Check if life support is needed
-  if (tempC <= lowtempset) {
-    digitalWrite(tempcontrolpin, HIGH);   // turn the heater on (HIGH is the voltage level)
+  if (tempC <= lowtempset)
+  {
+    digitalWrite(tempcontrolpin, HIGH); // turn the heater on (HIGH is the voltage level)
     delay(250);
   }
 
-  else if (tempC >= hightempset) {
-    digitalWrite(tempcontrolpin, LOW);   // turn the heater off (LOW is the voltage level)
+  else if (tempC >= hightempset)
+  {
+    digitalWrite(tempcontrolpin, LOW); // turn the heater off (LOW is the voltage level)
     delay(250);
   }
 
-  else if (lowtempset < tempC && tempC < hightempset && (digitalRead(tempcontrolpin) == LOW)) {
+  else if (lowtempset < tempC && tempC < hightempset && (digitalRead(tempcontrolpin) == LOW))
+  {
     digitalWrite(tempcontrolpin, LOW);
     delay(250);
   }
 
-  else if (lowtempset < tempC && tempC < hightempset && (digitalRead(tempcontrolpin) == HIGH)) {
+  else if (lowtempset < tempC && tempC < hightempset && (digitalRead(tempcontrolpin) == HIGH))
+  {
     digitalWrite(tempcontrolpin, HIGH);
     delay(250);
   }
 
-  else {
+  else
+  {
   }
   //GPS
   // if a sentence is received, we can check the checksum, parse it...
-  if (GPS.newNMEAreceived()) {
+  if (GPS.newNMEAreceived())
+  {
 
-    if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
-      return;  // we can fail to parse a sentence in which case we should just wait for another
+    if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+      return;                       // we can fail to parse a sentence in which case we should just wait for another
   }
 
   // if millis() or timer wraps around, we'll just reset it - GPS
-  if (timer > millis())  timer = millis();
+  if (timer > millis())
+    timer = millis();
 
   // approximately every 2 seconds or so, print out the current stats - GPS
-  if (millis() - timer > 2000) {
+  if (millis() - timer > 2000)
+  {
     timer = millis(); // reset the timer
-
 
     //SD Card
     datalog = SD.open(filename, FILE_WRITE); //starts writing on the SD Card
@@ -274,19 +290,19 @@ void loop() {
     datalog.print(':');
     datalog.print(now.second(), DEC);
     datalog.print(", ");
-    datalog.print(  GPS.hour, DEC);
+    datalog.print(GPS.hour, DEC);
     datalog.print(':');
-    datalog.print(  GPS.minute, DEC);
+    datalog.print(GPS.minute, DEC);
     datalog.print(':');
-    datalog.print(  GPS.seconds, DEC);
+    datalog.print(GPS.seconds, DEC);
     datalog.print(",   ");
-    datalog.print(  GPS.latitude, 4);
+    datalog.print(GPS.latitude, 4);
     datalog.print(",  ");
-    datalog.print(  GPS.longitude, 4);
+    datalog.print(GPS.longitude, 4);
     datalog.print(", ");
-    datalog.print(  GPS.altitude);
+    datalog.print(GPS.altitude);
     datalog.print(",");
-    datalog.print((int)  GPS.satellites);
+    datalog.print((int)GPS.satellites);
     datalog.print(",");
     datalog.print(tempC);
     datalog.println();
@@ -324,8 +340,7 @@ void loop() {
     Serial.println();
 
     delay(1000);
-
-}
+  }
 }
 
 // function to print a device address
@@ -333,7 +348,8 @@ void printAddress(DeviceAddress deviceAddress)
 {
   for (uint8_t i = 0; i < 8; i++)
   {
-    if (deviceAddress[i] < 16) Serial.print("0");
+    if (deviceAddress[i] < 16)
+      Serial.print("0");
     Serial.print(deviceAddress[i], HEX);
   }
-  }
+}

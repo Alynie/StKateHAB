@@ -3,11 +3,10 @@
  */
 
 //begin SD initialzie variables/library
-#include <SD.h> 
-
+#include <SD.h>
 
 //begin RTC libraries and variables
-#include <Wire.h> //This is for the RTC
+#include <Wire.h>   //This is for the RTC
 #include <RTClib.h> //RTC library can be downloaded from Adafruit.com
 //For the older Adafruit dataloggers, use DS1307 RTC
 
@@ -21,14 +20,14 @@ const int chipSelect = 10; // specific to Adafruit datashield
 //end SD initialize variables
 
 //begin Geiger initialize variables
-long unsigned int timer = 0; 
+long unsigned int timer = 0;
 long unsigned int Logtime = 5000; // Logging time in milliseconds
 long unsigned int LocalTime = 0;
 long unsigned int LoopLog = 150;
-long int counter1 = 0; // Local Counter for Geiger counter sensor 1 hits
-long int counter2 = 0; // Local Counter for Geiger counter sensor 2 (on top of 1) hits
-long int counter3 = 0; // Local Counter for Geiger counter sensor 3 (on side of 1) hits
-long int counter4 = 0; // Local Counter for Geiger counter sensor 4 
+long int counter1 = 0;           // Local Counter for Geiger counter sensor 1 hits
+long int counter2 = 0;           // Local Counter for Geiger counter sensor 2 (on top of 1) hits
+long int counter3 = 0;           // Local Counter for Geiger counter sensor 3 (on side of 1) hits
+long int counter4 = 0;           // Local Counter for Geiger counter sensor 4
 long int coincidencecount12 = 0; // Counter for coincident hits between sensors 1 and 2
 long int coincidencecount13 = 0; // Counter for coincident hits between sensors 1 and 3
 long int coincidencecount14 = 0;
@@ -48,8 +47,7 @@ int sensor1;
 int sensor2;
 int sensor3;
 int sensor4;
-//end Geiger initalize variables 
-
+//end Geiger initalize variables
 
 //Pressure
 float pressureSensor;
@@ -59,21 +57,23 @@ float pressureSensor2V;
 float psi1;
 float psi2;
 
-void setup() {
+void setup()
+{
 
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
 
+  // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
+  Serial.begin(115200);
 
-// connect at 115200 so we can read the GPS fast enough and echo without dropping chars
-  Serial.begin(115200); 
-  
-  if (! rtc.begin()) {
+  if (!rtc.begin())
+  {
     Serial.println("Couldn't find RTC");
     while (1);
   }
 
-  if (!rtc.begin()) {
+  if (!rtc.initialized())
+  {
     Serial.println("RTC clock is being reset. Please recomment and rerun!");
     // following line sets the RTC to the date & time this sketch was compiled
     //rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //UNCOMMENT THIS LINE TO SET TIME TO MATCH COMPUTER
@@ -82,165 +82,161 @@ void setup() {
     // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
   }
 
-//Initialize SD Card
+  //Initialize SD Card
   Serial.print("Initializing SD Card...");
 
   pinMode(SS, OUTPUT);
 
-if(!SD.begin(10)) // for Mega and Adafruit datashield
+  if (!SD.begin(10)) // for Mega and Adafruit datashield
   {
     Serial.println("Card failed, or not present");
     //digitalWrite(led, HIGH);
     //delay(1000);
     return;
   }
-  Serial.println("Card initialized.");  
+  Serial.println("Card initialized.");
   Serial.print("Creating File...");
 
   // Make a new file each time the arduino is powered
-  for (uint8_t i = 0; i < 100; i++) 
+  for (uint8_t i = 0; i < 100; i++)
   {
-    filename[6] = i/10 + '0';
-    filename[7] = i%10 + '0';
-    if (! SD.exists(filename)) 
+    filename[6] = i / 10 + '0';
+    filename[7] = i % 10 + '0';
+    if (!SD.exists(filename))
     {
       // only open a new file if it doesn't exist
-      datalog = SD.open(filename, FILE_WRITE); 
+      datalog = SD.open(filename, FILE_WRITE);
       break;
-    }  
-}
+    }
+  }
 
-Serial.print("Logging to: ");
+  Serial.print("Logging to: ");
   Serial.println(filename);
 
-  if(!datalog)
-  {  
-    Serial.println("Couldn't Create File"); 
+  if (!datalog)
+  {
+    Serial.println("Couldn't Create File");
     delay(1000);
     Serial.println("Couldn't Create File");
     return;
   }
 
- // Print Header
-  String Header =  "Date, Time, S1 Hit Count, S2 Hit Count, S3 Hit Count, S4 Hit Count, Coin 1&2, Coin 1&3, Coin 1&4, Coin 2&3, Coin 2&4, Coin 3&4, Coin 1&2&3, Coin 1&2&4, Coin 1&3&4, Coin 2&3&4, Coin 1&2&3&4, P(1), P(2)";
+  // Print Header
+  String Header = "Date, Time, S1 Hit Count, S2 Hit Count, S3 Hit Count, S4 Hit Count, Coin 1&2, Coin 1&3, Coin 1&4, Coin 2&3, Coin 2&4, Coin 3&4, Coin 1&2&3, Coin 1&2&4, Coin 1&3&4, Coin 2&3&4, Coin 1&2&3&4, P(1), P(2)";
 
   datalog = SD.open(filename, FILE_WRITE);
   datalog.println(Header);
-  Serial.println(Header); 
- 
-  datalog.close(); 
+  Serial.println(Header);
+
+  datalog.close();
 }
 
+void loop()
+{
 
-void loop() {
-  
   //RTC stuff
   DateTime now = rtc.now();
-  
+
   // Begin Geiger loop
   timer = millis();
 
-while((millis()-timer) < Logtime)
+  while ((millis() - timer) < Logtime)
   {
     LocalTime = micros();
     int sensor1 = digitalRead(4); // Read in the pin for sensor 1. Duplicate for multiple geiger counters
     int sensor2 = digitalRead(5); // Read in the pin for sensor 2. Duplicate for multiple geiger counters
     int sensor3 = digitalRead(6); // Read in the pin for sensor 3. Duplicate for multiple geiger counters
     int sensor4 = digitalRead(7);
-        
-    if(sensor1==LOW)
+
+    if (sensor1 == LOW)
     {
       counter1++;
       hit1 = true;
-       
     }
-    if(sensor2==LOW)
+    if (sensor2 == LOW)
     {
       counter2++;
       hit2 = true;
-       
     }
-    if(sensor3==LOW)
+    if (sensor3 == LOW)
     {
       counter3++;
       hit3 = true;
-       
     }
-    if(sensor4==LOW)
+    if (sensor4 == LOW)
     {
       counter4++;
       hit4 = true;
     }
-  
-    if(hit1==1 && hit2==1 && hit3==1 && hit4==1) // These if statements increment the coincidence counters
+
+    if (hit1 == 1 && hit2 == 1 && hit3 == 1 && hit4 == 1) // These if statements increment the coincidence counters
     {
       coincidencecount1234++;
     }
-   if(hit1==1 && hit2==1)
+    if (hit1 == 1 && hit2 == 1)
     {
       coincidencecount12++;
     }
-    
-    if(hit1==1 && hit3==1)
+
+    if (hit1 == 1 && hit3 == 1)
     {
       coincidencecount13++;
     }
-     if(hit1==1 && hit4==1)
+    if (hit1 == 1 && hit4 == 1)
     {
       coincidencecount14++;
     }
-    
-    if(hit2==1 && hit3==1)
+
+    if (hit2 == 1 && hit3 == 1)
     {
       coincidencecount23++;
     }
-    if (hit2==1 && hit4==1)
+    if (hit2 == 1 && hit4 == 1)
     {
       coincidencecount24++;
     }
-    if (hit3==1 && hit4==1)
+    if (hit3 == 1 && hit4 == 1)
     {
       coincidencecount34++;
     }
-    if (hit1==1 && hit2==1 && hit3==1)
+    if (hit1 == 1 && hit2 == 1 && hit3 == 1)
     {
       coincidencecount123++;
     }
-    if (hit1==1 && hit2==1 && hit4==1) 
+    if (hit1 == 1 && hit2 == 1 && hit4 == 1)
     {
       coincidencecount124++;
     }
-    if (hit1==1 && hit3==1 && hit4==1)
+    if (hit1 == 1 && hit3 == 1 && hit4 == 1)
     {
       coincidencecount134++;
     }
-    if (hit2==1 && hit3==1 && hit4==1)
+    if (hit2 == 1 && hit3 == 1 && hit4 == 1)
     {
       coincidencecount234++;
     }
-  
-  
-      hit1=false;
-      hit2=false;
-      hit3=false;
-      hit4=false;
+
+    hit1 = false;
+    hit2 = false;
+    hit3 = false;
+    hit4 = false;
   }
-      
-   while((micros()-LocalTime)<LoopLog)
-    {
-      delayMicroseconds(5);  //slow code down if needed, to let Geiger counters reset.  This will need to be changed once logging has been added
-    }    
 
-    //Pressure
-    // Pressure Sensor Honeywell SSCSANN015PAAA5
-    pressureSensor = analogRead(A0); // Read the analog pin
-    pressureSensorV = pressureSensor * (5.0 / 1024); // Convert the digital number to voltage
-    psi1 = (pressureSensorV - (0.1 * 5.0)) / (4.0 / 15.0); // Convert the voltage to proper units
+  while ((micros() - LocalTime) < LoopLog)
+  {
+    delayMicroseconds(5); //slow code down if needed, to let Geiger counters reset.  This will need to be changed once logging has been added
+  }
 
-    // Pressure Sensor Honeywell SSCMRNT030PAAA3
-    pressureSensor2 = analogRead(A1); // Read the analog pin
-    pressureSensor2V = pressureSensor2 * (5.0 / 1024); // Convert the digital number to voltage
-    psi2 = (pressureSensor2V - (0.1 * 5.0)) / (4.0 / 15.0); // Convert the voltage to proper units
+  //Pressure
+  // Pressure Sensor Honeywell SSCSANN015PAAA5
+  pressureSensor = analogRead(A0);                       // Read the analog pin
+  pressureSensorV = pressureSensor * (5.0 / 1024);       // Convert the digital number to voltage
+  psi1 = (pressureSensorV - (0.1 * 5.0)) / (4.0 / 15.0); // Convert the voltage to proper units
+
+  // Pressure Sensor Honeywell SSCMRNT030PAAA3
+  pressureSensor2 = analogRead(A1);                       // Read the analog pin
+  pressureSensor2V = pressureSensor2 * (5.0 / 1024);      // Convert the digital number to voltage
+  psi2 = (pressureSensor2V - (0.1 * 5.0)) / (4.0 / 15.0); // Convert the voltage to proper units
 
   datalog = SD.open(filename, FILE_WRITE); //starts writing on the SD Card
   datalog.print(now.month(), DEC);
@@ -285,18 +281,17 @@ while((millis()-timer) < Logtime)
   datalog.print(", ");
   datalog.print(coincidencecount1234);
   datalog.print(", ");
-  datalog.print(  psi1, 2);
+  datalog.print(psi1, 2);
   datalog.print(",");
-  datalog.print(  psi2, 2);
+  datalog.print(psi2, 2);
   datalog.print(",  ");
-  
+
   datalog.println();
 
   datalog.close();
   delay(100);
 
-
-//This is stuff printed on the Serial Monitor  
+  //This is stuff printed on the Serial Monitor
   Serial.print(now.month(), DEC);
   Serial.print('/');
   Serial.print(now.day(), DEC);
@@ -343,14 +338,14 @@ while((millis()-timer) < Logtime)
   Serial.print(",  ");
   Serial.print(psi2, 2);
   Serial.print(",  ");
-    
+
   Serial.println();
 
-  // Reset short-term counters but not cumulative counters 
-  counter1=0;
-  counter2=0;
-  counter3=0;
-  counter4=0;
-  
+  // Reset short-term counters but not cumulative counters
+  counter1 = 0;
+  counter2 = 0;
+  counter3 = 0;
+  counter4 = 0;
+
   delay(300);
-  }// end loop()
+} // end loop()
